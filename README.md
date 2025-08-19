@@ -1,99 +1,217 @@
-<<<<<<< HEAD
-# 模型测试代码使用说明
+# AcidNetPro - Deep Learning Framework for Acidophilic Protein Prediction
 
-## 文件说明
 
-1. **`test_model.py`** - 命令行版本的测试脚本
-2. **`test_model_notebook.py`** - Notebook版本的测试代码
-3. **`README_test.md`** - 使用说明文档
 
-## 使用方法
+## Project Overview
 
-### 方法1：命令行版本
 
-```bash
-python test_model.py \
-    --model_path /path/to/your/model.pth \
-    --pos_test_path /path/to/positive_test.npy \
-    --neg_test_path /path/to/negative_test.npy \
-    --batch_size 32 \
-    --save_predictions \
-    --predictions_path test_predictions.npy \
-    --model_type efficient_window_moe
+
+**AcidNetPro** is a deep learning-based framework for predicting acidophilic proteins. It integrates multiple advanced machine learning technologies, including:
+
+- **Transformer Architecture**: Sequence modeling based on attention mechanisms
+- **Mixture of Experts (MoE)**: Enhances model capacity and specialization
+- **Generative Adversarial Network (GAN)**: Data augmentation and feature learning
+- **ESM Pretrained Embeddings**: Leverages prior knowledge from protein language models
+
+## Project Structure
+
+
+
+```
+├── README.md                    # Project description
+├── requirements.txt             # Python dependencies
+├── environment.yml              # Conda environment configuration
+├── .gitignore                   # Git ignore settings
+├── model.ipynb                  # Main model training notebook
+├── dataselect.ipynb             # Data selection and preprocessing
+├── DCGAN-GP.py                  # DCGAN with gradient penalty
+│
+├── datadeal/                    # Data processing module
+│   ├── datastatics.py           # Data statistics analysis
+│   └── ESMC.py                  # ESM embedding processing
+│
+├── Raw Data/                    # Raw data
+│   ├── acidoSplit.csv           # Acidophilic protein dataset
+│   ├── positive_train.fasta     # Positive training set
+│   ├── positive_test.fasta      # Positive test set
+│   ├── negative_train.fasta     # Negative training set
+│   └── negative_test.fasta      # Negative test set
+│
+└── experiments/                 # Experiment-related code
+    ├── moe_anlysis/             # MoE model analysis
+    ├── gan_anlysis/             # GAN model analysis
+    ├── qianruxuanze/            # Embedding selection
+    ├── Comparative experiment/  # Comparative experiments
+    ├── xiaorongshiyan/          # Ablation experiments
+    └── zhongjianceng_t-sne/     # t-SNE visualization of intermediate layers
 ```
 
-### 方法2：Notebook版本
 
-1. 将 `test_model_notebook.py` 的内容复制到你的 notebook cell 中
-2. 修改配置参数：
-   ```python
-   # 修改这些路径为你的实际路径
-   MODEL_PATH = '/path/to/your/model.pth'
-   POS_TEST_PATH = '/path/to/positive_test.npy'
-   NEG_TEST_PATH = '/path/to/negative_test.npy'
-   ```
-3. 确保你的模型类（如 `EfficientWindowMoEProteinClassifier`）已经定义
-4. 运行 `test_model()` 函数
 
-## 需要修改的地方
+## Core Features
 
-### 1. 模型类导入
-在测试代码中，你需要导入你的模型类：
 
-```python
-# 如果你有单独的模型文件，添加导入语句
-from your_model_file import EfficientWindowMoEProteinClassifier
-# 或者
-from your_model_file import ProteinClassifier
+
+### 1. Model Architecture
+
+
+
+- **TransformerMoE**: Transformer-based mixture-of-experts model
+- **Multi-head Attention**: Captures long-range dependencies in sequences
+
+### 2. Data Processing
+
+
+
+- **FASTA Format Support**: Standard format for protein sequences
+- **ESM Embedding Generation**: Using pretrained protein language models
+- **Sequence Length Normalization**: Handles variable-length sequences
+- **Data Augmentation**: GAN-based negative sample generation
+
+### 3. Analysis Tools
+
+
+
+- **Attention Visualization**: Understand important regions in sequences
+- **Expert Utilization Analysis**: MoE expert activation patterns
+- **Amino Acid Correlation Analysis**: Study correlations between residues
+- **Sankey Diagrams**: Visualize information flow
+
+## Quick Start
+
+
+
+### Environment Setup
+
+
+
+```
+bash
+# Using conda
+conda env create -f environment.yml
+conda activate acidnetpro
+
+# Or using pip
+pip install -r requirements.txt
 ```
 
-### 2. 模型创建
-根据你使用的模型类型，修改模型创建部分：
 
-```python
-# 对于 EfficientWindowMoEProteinClassifier
-model = EfficientWindowMoEProteinClassifier(
-    embed_dim=1152, hidden_dim=256, num_classes=2, 
-    window_size=30, num_windows=6, dropout=0.5, load_balance_weight=0.01
+
+### Data Preparation
+
+
+
+Make sure your data paths are correctly set:
+
+```
+# Training data paths
+train_pos = '/path/to/positive_train_embedding.npy'  # Positive training samples
+train_neg = '/path/to/negative_train_combined.npy'   # Negative training samples (including GAN-generated)
+
+# Testing data paths
+test_pos = '/path/to/positive_test_embedding.npy'    # Positive test samples
+test_neg = '/path/to/negative_test_embedding.npy'    # Negative test samples
+```
+
+
+
+### Usage
+
+
+
+#### 1. Use Jupyter Notebook
+
+
+
+We recommend using `model.ipynb` in the project root for training and testing.
+
+Execute all cells in order:
+
+1. Import libraries and set random seed
+2. Define dataset class and model architecture
+3. Train model(standard or 10-fold cross-validation)
+4. Evaluate model
+
+#### 2. Standard Training
+
+
+
+```
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+train_dataset = ProteinNPYDataset(train_pos, train_neg)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
+
+model = TransformerMoE(
+    d_model=1152, nhead=8, d_ff=2048, num_layers=4,
+    num_experts=30, k=3, dropout=0.1, noisy_std=1.0, num_classes=2
 ).to(device)
 
-# 对于 ProteinClassifier
-model = ProteinClassifier().to(device)
+optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
+criterion = nn.CrossEntropyLoss()
+scaler = GradScaler()  # Mixed precision training
+
+epochs = 10
+for epoch in range(epochs):
+    train_loss = train_one_epoch(model, train_loader, optimizer, criterion, device, scaler=scaler)
+    print(f"Epoch {epoch+1}: Loss = {train_loss:.4f}")
 ```
 
-### 3. 数据路径
-修改为你的实际数据路径：
 
-```python
-MODEL_PATH = '/exp_data/sjx/star/efficient_window_moe_checkpoints/best_moe_model.pth'
-POS_TEST_PATH = '/exp_data/sjx/star/first_data/ESM-embedding/positive_test_embedding.npy'
-NEG_TEST_PATH = '/exp_data/sjx/star/gan_data/negative_test_all_combined.npy'
+
+#### 3. 10-Fold Cross Validation
+
+
+
+#### 4. Model Testing and Evaluation
+
+
+
+```
+model = TransformerMoE(
+    d_model=1152, nhead=8, d_ff=2048, num_layers=4,
+    num_experts=30, k=3, dropout=0.1, noisy_std=1.0, num_classes=2
+).to(device)
+
+model.load_state_dict(torch.load('path/to/your/model.pth', map_location=device))
+
+test_dataset = ProteinNPYDataset(test_pos, test_neg)
+test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=2)
+
+eval_model_extended(model, test_loader, device)
 ```
 
-## 输出结果
 
-测试完成后会输出：
-- **控制台**：ACC、PRE、REC、F1、AUC、MCC 等指标
-- **文本文件**：`test_results.txt` 包含详细结果
-- **预测文件**：`test_predictions.npy`（如果启用）包含预测结果、标签和概率
 
-## 注意事项
+### Model Parameter Description
 
-1. **确保模型架构一致**：测试时使用的模型架构必须与训练时完全一致
-2. **数据格式**：确保测试数据的格式与训练数据一致
-3. **内存使用**：代码使用内存映射加载数据，适合大文件
-4. **设备兼容**：代码会自动检测并使用可用的 GPU/CPU
 
-## 常见问题
 
-### Q: 模型加载失败怎么办？
-A: 检查模型路径是否正确，确保模型架构与训练时一致
+| Parameter      | Default | Description                              |
+| -------------- | ------- | ---------------------------------------- |
+| `d_model`      | 1152    | Model dimension (matches ESM embeddings) |
+| `nhead`        | 8       | Number of attention heads                |
+| `d_ff`         | 2048    | Feed-forward hidden layer size           |
+| `num_layers`   | 4       | Number of Transformer layers             |
+| `num_experts`  | 30      | Number of MoE experts                    |
+| `k`            | 3       | Top-k routing (number of experts used)   |
+| `dropout`      | 0.1     | Dropout rate                             |
+| `noisy_std`    | 1.0     | Standard deviation of noisy gating       |
+| `batch_size`   | 64      | Batch size                               |
+| `lr`           | 2e-4    | Learning rate                            |
+| `weight_decay` | 1e-4    | Weight decay for regularization          |
 
-### Q: 如何修改批次大小？
-A: 修改 `BATCH_SIZE` 参数或使用 `--batch_size` 命令行参数
+### Evaluation Metrics
 
-### Q: 如何保存预测结果？
-A: 设置 `SAVE_PREDICTIONS = True` 或使用 `--save_predictions` 参数 
-=======
-# AcidNetPro
->>>>>>> 670007e5b0ec88f9355cb492d0e67791b4ba3f7f
+
+
+The model supports full binary classification metrics:
+
+- **ACC**: Accuracy – proportion of correct predictions
+- **PRE**: Precision – proportion of true positives among predicted positives
+- **REC/Sn**: Recall / Sensitivity – proportion of true positives found
+- **Sp**: Specificity – proportion of true negatives found
+- **F1**: Harmonic mean of precision and recal
+- **MCC**: Matthews Correlation Coefficient – measures correlation between predictions and ground truth, range [-1, 1]
+- **AUC**: Area Under ROC Curve – evaluates overall classification ability
+- **AUPRC**: Area Under Precision-Recall Curve

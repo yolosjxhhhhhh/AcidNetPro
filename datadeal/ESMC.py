@@ -12,7 +12,7 @@ def read_fasta(file_path):
 
 def save_embeddings(embeddings, output_path):
     np.save(output_path, embeddings)
-    print(f"✅ Saved embeddings to: {output_path}")
+    print(f" Saved embeddings to: {output_path}")
 def pad_embedding(emb, max_len, emb_dim):
     padded = np.zeros((max_len, emb_dim), dtype=np.float32)
     length = emb.shape[0]
@@ -22,7 +22,7 @@ def process_fasta_with_model(model: ESMC, fasta_path: str, output_path: str, max
     sequences = read_fasta(fasta_path)
     all_embeddings = []
 
-    max_token_len = max_aa_len + 2  # 预测特殊token数
+    max_token_len = max_aa_len + 2  
 
     for i, seq in enumerate(sequences):
         seq = seq[:max_aa_len]
@@ -36,11 +36,11 @@ def process_fasta_with_model(model: ESMC, fasta_path: str, output_path: str, max
         output = model(input_ids)
         emb = output.embeddings.float().detach().cpu().numpy()[0]
 
-        emb = emb[1:-1, :]  # 去起始和终止token
+        emb = emb[1:-1, :]  
 
         emb_padded = pad_embedding(emb, max_aa_len, embedding_dim)
 
-        assert emb_padded.shape == (max_aa_len, embedding_dim), f"Embedding padded shape {emb_padded.shape} 不符合预期"
+        assert emb_padded.shape == (max_aa_len, embedding_dim), f"Embedding padded shape {emb_padded.shape} not as expected"
 
         all_embeddings.append(emb_padded)
 
@@ -57,7 +57,7 @@ def main():
 
     os.makedirs(output_dir, exist_ok=True)
 
-    model = ESMC.from_pretrained("esmc_600m").to("cuda")  # 或者 .to("cpu")
+    model = ESMC.from_pretrained("esmc_600m").to("cuda")  
 
     for filename in os.listdir(input_dir):
         if filename.endswith(".fasta"):
@@ -67,7 +67,7 @@ def main():
 
             if os.path.exists(output_path):
                 print(f"Skipping {filename} because {out_name} already exists.")
-                continue  # 文件存在，跳过
+                continue  
 
             print(f"Processing {filename} ...")
             process_fasta_with_model(model, fasta_path, output_path, max_aa_len=max_aa_len, embedding_dim=embedding_dim)

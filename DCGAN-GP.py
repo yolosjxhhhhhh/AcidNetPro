@@ -11,10 +11,7 @@ import os
 from sklearn.decomposition import PCA
 import random
 
-# ========================
-# Config
-# ========================
-# 设置随机种子以确保可重复性
+
 seed = 42
 random.seed(seed)
 np.random.seed(seed)
@@ -34,13 +31,13 @@ lambda_gp = 10
 epochs = 300
 checkpoint_dir = "/exp_data/sjx/star/gan_data/checkpoints/"
 os.makedirs(checkpoint_dir, exist_ok=True)
-# ========== 判断是否已完成训练 ==========
+
 checkpoint_dir = "/exp_data/sjx/star/gan_data/checkpoints"
 epoch300_path = os.path.join(checkpoint_dir, "generator_epoch300.pt")
 best_path = os.path.join(checkpoint_dir, "best_generator.pt")
 
 if os.path.exists(epoch300_path) and os.path.exists(best_path):
-    print("[✓] 已检测到已完成训练的模型，将跳过训练阶段")
+    print(" A trained model has been detected, skipping the training phase.")
     skip_training = True
 else:
     skip_training = False
@@ -111,8 +108,8 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
 # Load Real Data
 # ========================
 real_data = np.load("/exp_data/sjx/star/first_data/ESM-embedding/negative_all_embedding.npy")
-print("真实数据 shape:", real_data.shape)
-print("真实数据值域：", real_data.min(), real_data.max())
+print("real data shape:", real_data.shape)
+print("range of real data：", real_data.min(), real_data.max())
 real_tensor = torch.tensor(real_data, dtype=torch.float32)
 dataloader = DataLoader(TensorDataset(real_tensor), batch_size=batch_size, shuffle=True)
 
@@ -127,7 +124,7 @@ optimizer_D = optim.Adam(D.parameters(), lr=1e-4, betas=(0.5, 0.9))
 # =======================
 # Training
 # ========================
-best_g_loss = float("inf")  # 初始化最小 G loss
+best_g_loss = float("inf")  
 if not skip_training:
     for epoch in range(1, epochs + 1):
         pbar = tqdm(dataloader, desc=f"Epoch {epoch}/{epochs}")
@@ -159,13 +156,13 @@ if not skip_training:
                 "G loss": f"{g_loss.item():.2f}"
             })
 
-        # === 每 10 epoch 或最后一个 epoch保存模型 ===
+        
         if epoch % 10 == 0 or epoch == epochs:
             save_path = os.path.join(checkpoint_dir, f"generator_epoch{epoch}.pt")
             torch.save(G.state_dict(), save_path)
             print(f"[Checkpoint] Saved generator to {save_path}")
 
-        # === 保存表现最好的 G ===
+        
         if g_loss.item() < best_g_loss:
             best_g_loss = g_loss.item()
             best_path = os.path.join(checkpoint_dir, "best_generator.pt")
@@ -176,15 +173,15 @@ if not skip_training:
 # Save Model & Generate
 # ========================
 # ========================
-# ✅ 使用 best_generator 生成数据
+
 # ========================
 print("\nLoading best generator for data generation...")
 
-# 重新加载 best generator 权重
+
 G.load_state_dict(torch.load(os.path.join(checkpoint_dir, "generator_epoch260.pt")))
 G.eval()
 
-# 生成 2435 条数据
+
 gen_total = 2435
 batch_size = 256
 generated = []
@@ -201,4 +198,4 @@ with torch.no_grad():
 generated = np.concatenate(generated, axis=0)
 save_data_path = "/exp_data/sjx/star/gan_data/260_e_fake_negative_embeddings.npy"
 np.save(save_data_path, generated)
-print(f"已保存生成的 2435 条数据到: {save_data_path}")
+print(f"Saved 2,435 generated data entries: {save_data_path}")
